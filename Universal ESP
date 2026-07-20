@@ -1,0 +1,1167 @@
+-- ESP GUI с цветной палитрой
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+-- СОХРАНЯЕМ ВСЕ ПОДКЛЮЧЕНИЯ ДЛЯ ПОЛНОЙ ВЫГРУЗКИ
+local connections = {}
+local function addConnection(conn)
+    table.insert(connections, conn)
+end
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = game:GetService("CoreGui")
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Size = UDim2.new(0, 320, 0, 260)
+mainFrame.Position = UDim2.new(0.5, -160, 0.5, -130)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+mainFrame.BackgroundTransparency = 0.1
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = screenGui
+mainFrame.ClipsDescendants = true
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = mainFrame
+
+local contentContainer = Instance.new("Frame")
+contentContainer.Size = UDim2.new(1, 0, 1, 0)
+contentContainer.BackgroundTransparency = 1
+contentContainer.Parent = mainFrame
+
+-- Кнопка закрытия (белый X)
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 26, 0, 26)
+closeButton.Position = UDim2.new(1, -65, 0, 3)
+closeButton.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+closeButton.BackgroundTransparency = 0
+closeButton.BorderSizePixel = 0
+closeButton.Text = "X"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextSize = 16
+closeButton.TextXAlignment = Enum.TextXAlignment.Center
+closeButton.TextYAlignment = Enum.TextYAlignment.Center
+closeButton.Font = Enum.Font.GothamBold
+closeButton.Parent = mainFrame
+closeButton.ZIndex = 10
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(1, 0)
+closeCorner.Parent = closeButton
+
+addConnection(closeButton.MouseEnter:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    closeButton.Size = UDim2.new(0, 28, 0, 28)
+    closeButton.Position = UDim2.new(1, -66, 0, 2)
+end))
+
+addConnection(closeButton.MouseLeave:Connect(function()
+    closeButton.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    closeButton.Size = UDim2.new(0, 26, 0, 26)
+    closeButton.Position = UDim2.new(1, -65, 0, 3)
+end))
+
+-- Кнопка сворачивания
+local arrowButton = Instance.new("TextButton")
+arrowButton.Size = UDim2.new(0, 26, 0, 26)
+arrowButton.Position = UDim2.new(1, -35, 0, 3)
+arrowButton.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+arrowButton.BackgroundTransparency = 0
+arrowButton.BorderSizePixel = 0
+arrowButton.Text = "◀"
+arrowButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+arrowButton.TextSize = 16
+arrowButton.Font = Enum.Font.GothamBold
+arrowButton.Parent = mainFrame
+arrowButton.ZIndex = 10
+
+local arrowCorner = Instance.new("UICorner")
+arrowCorner.CornerRadius = UDim.new(0, 6)
+arrowCorner.Parent = arrowButton
+
+-- Заголовок (просто текст, без фона)
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -100, 0, 30)
+titleLabel.Position = UDim2.new(0, 5, 0, 0)
+titleLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+titleLabel.BackgroundTransparency = 1
+titleLabel.BorderSizePixel = 0
+titleLabel.Text = "🎨 ESP Обводка"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextSize = 16
+titleLabel.Font = Enum.Font.GothamSemibold
+titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+titleLabel.Parent = contentContainer
+
+local settingsContainer = Instance.new("Frame")
+settingsContainer.Size = UDim2.new(1, -20, 0, 210)
+settingsContainer.Position = UDim2.new(0, 10, 0, 40)
+settingsContainer.BackgroundTransparency = 1
+settingsContainer.Parent = contentContainer
+
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(1, 0, 0, 35)
+toggleButton.Position = UDim2.new(0, 0, 0, 0)
+toggleButton.BackgroundColor3 = Color3.fromRGB(60, 200, 80)
+toggleButton.BorderSizePixel = 0
+toggleButton.Text = "✅ ESP ВКЛ"
+toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleButton.TextSize = 14
+toggleButton.Font = Enum.Font.GothamSemibold
+toggleButton.Parent = settingsContainer
+
+local toggleCorner = Instance.new("UICorner")
+toggleCorner.CornerRadius = UDim.new(0, 6)
+toggleCorner.Parent = toggleButton
+
+local selfToggle = Instance.new("TextButton")
+selfToggle.Size = UDim2.new(0.48, 0, 0, 30)
+selfToggle.Position = UDim2.new(0, 0, 0, 42)
+selfToggle.BackgroundColor3 = Color3.fromRGB(60, 200, 80)
+selfToggle.BorderSizePixel = 0
+selfToggle.Text = "👤 Себя"
+selfToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+selfToggle.TextSize = 13
+selfToggle.Font = Enum.Font.GothamSemibold
+selfToggle.Parent = settingsContainer
+
+local selfCorner = Instance.new("UICorner")
+selfCorner.CornerRadius = UDim.new(0, 6)
+selfCorner.Parent = selfToggle
+
+local othersToggle = Instance.new("TextButton")
+othersToggle.Size = UDim2.new(0.48, 0, 0, 30)
+othersToggle.Position = UDim2.new(0.52, 0, 0, 42)
+othersToggle.BackgroundColor3 = Color3.fromRGB(60, 200, 80)
+othersToggle.BorderSizePixel = 0
+othersToggle.Text = "👥 Других"
+othersToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+othersToggle.TextSize = 13
+othersToggle.Font = Enum.Font.GothamSemibold
+othersToggle.Parent = settingsContainer
+
+local othersCorner = Instance.new("UICorner")
+othersCorner.CornerRadius = UDim.new(0, 6)
+othersCorner.Parent = othersToggle
+
+-- Кнопка скрыть/показать никнеймы
+local namesToggle = Instance.new("TextButton")
+namesToggle.Size = UDim2.new(0.48, 0, 0, 30)
+namesToggle.Position = UDim2.new(0, 0, 0, 78)
+namesToggle.BackgroundColor3 = Color3.fromRGB(60, 200, 80)
+namesToggle.BorderSizePixel = 0
+namesToggle.Text = "📝 Никнеймы"
+namesToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+namesToggle.TextSize = 13
+namesToggle.Font = Enum.Font.GothamSemibold
+namesToggle.Parent = settingsContainer
+
+local namesCorner = Instance.new("UICorner")
+namesCorner.CornerRadius = UDim.new(0, 6)
+namesCorner.Parent = namesToggle
+
+-- КНОПКА ПРЕДМЕТЫ
+local itemsButton = Instance.new("TextButton")
+itemsButton.Size = UDim2.new(0.48, 0, 0, 30)
+itemsButton.Position = UDim2.new(0.52, 0, 0, 78)
+itemsButton.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
+itemsButton.BorderSizePixel = 0
+itemsButton.Text = "📦 Предметы"
+itemsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsButton.TextSize = 13
+itemsButton.Font = Enum.Font.GothamSemibold
+itemsButton.Parent = settingsContainer
+
+local itemsCorner = Instance.new("UICorner")
+itemsCorner.CornerRadius = UDim.new(0, 6)
+itemsCorner.Parent = itemsButton
+
+-- Кнопка открытия палитры
+local paletteToggle = Instance.new("TextButton")
+paletteToggle.Size = UDim2.new(1, 0, 0, 30)
+paletteToggle.Position = UDim2.new(0, 0, 0, 114)
+paletteToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 140)
+paletteToggle.BorderSizePixel = 0
+paletteToggle.Text = "🎨 Палитра"
+paletteToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+paletteToggle.TextSize = 13
+paletteToggle.Font = Enum.Font.GothamSemibold
+paletteToggle.Parent = settingsContainer
+
+local paletteCorner = Instance.new("UICorner")
+paletteCorner.CornerRadius = UDim.new(0, 6)
+paletteCorner.Parent = paletteToggle
+
+-- КНОПКА ТЕЛЕПОРТА
+local teleportButton = Instance.new("TextButton")
+teleportButton.Size = UDim2.new(1, 0, 0, 30)
+teleportButton.Position = UDim2.new(0, 0, 0, 150)
+teleportButton.BackgroundColor3 = Color3.fromRGB(70, 70, 200)
+teleportButton.BorderSizePixel = 0
+teleportButton.Text = "🚀 Телепорт"
+teleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportButton.TextSize = 13
+teleportButton.Font = Enum.Font.GothamSemibold
+teleportButton.Parent = settingsContainer
+
+local teleportCorner = Instance.new("UICorner")
+teleportCorner.CornerRadius = UDim.new(0, 6)
+teleportCorner.Parent = teleportButton
+
+-- ===== ОТДЕЛЬНАЯ МЕНЮШКА ДЛЯ ПРЕДМЕТОВ (СПРАВА И НИЖЕ) =====
+local itemsFrame = Instance.new("Frame")
+itemsFrame.Size = UDim2.new(0, 300, 0, 120)
+itemsFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
+itemsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+itemsFrame.BackgroundTransparency = 0.1
+itemsFrame.BorderSizePixel = 0
+itemsFrame.Active = true
+itemsFrame.Draggable = true
+itemsFrame.Parent = screenGui
+itemsFrame.Visible = false
+
+local itemsCornerMain = Instance.new("UICorner")
+itemsCornerMain.CornerRadius = UDim.new(0, 12)
+itemsCornerMain.Parent = itemsFrame
+
+-- Заголовок меню предметов
+local itemsTitle = Instance.new("TextLabel")
+itemsTitle.Size = UDim2.new(1, 0, 0, 30)
+itemsTitle.Position = UDim2.new(0, 0, 0, 0)
+itemsTitle.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+itemsTitle.BackgroundTransparency = 1
+itemsTitle.BorderSizePixel = 0
+itemsTitle.Text = "📦 Предметы"
+itemsTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsTitle.TextSize = 14
+itemsTitle.Font = Enum.Font.GothamSemibold
+itemsTitle.Parent = itemsFrame
+
+-- Кнопка закрытия меню предметов (белый X)
+local itemsClose = Instance.new("TextButton")
+itemsClose.Size = UDim2.new(0, 22, 0, 22)
+itemsClose.Position = UDim2.new(1, -26, 0, 4)
+itemsClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+itemsClose.BackgroundTransparency = 0
+itemsClose.BorderSizePixel = 0
+itemsClose.Text = "X"
+itemsClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+itemsClose.TextSize = 14
+itemsClose.Font = Enum.Font.GothamBold
+itemsClose.Parent = itemsFrame
+
+local itemsCloseCorner = Instance.new("UICorner")
+itemsCloseCorner.CornerRadius = UDim.new(1, 0)
+itemsCloseCorner.Parent = itemsClose
+
+addConnection(itemsClose.MouseEnter:Connect(function()
+    itemsClose.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    itemsClose.Size = UDim2.new(0, 24, 0, 24)
+    itemsClose.Position = UDim2.new(1, -27, 0, 3)
+end))
+
+addConnection(itemsClose.MouseLeave:Connect(function()
+    itemsClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    itemsClose.Size = UDim2.new(0, 22, 0, 22)
+    itemsClose.Position = UDim2.new(1, -26, 0, 4)
+end))
+
+-- Контейнер для кнопок предметов
+local itemsContainer = Instance.new("Frame")
+itemsContainer.Size = UDim2.new(1, -20, 1, -40)
+itemsContainer.Position = UDim2.new(0, 10, 0, 35)
+itemsContainer.BackgroundTransparency = 1
+itemsContainer.Parent = itemsFrame
+
+-- Кнопка F3X
+local f3xButton = Instance.new("TextButton")
+f3xButton.Size = UDim2.new(1, 0, 0, 35)
+f3xButton.Position = UDim2.new(0, 0, 0, 0)
+f3xButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+f3xButton.BorderSizePixel = 0
+f3xButton.Text = "🏗️ F3X"
+f3xButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+f3xButton.TextSize = 14
+f3xButton.Font = Enum.Font.GothamSemibold
+f3xButton.Parent = itemsContainer
+
+local f3xCorner = Instance.new("UICorner")
+f3xCorner.CornerRadius = UDim.new(0, 6)
+f3xCorner.Parent = f3xButton
+
+-- Кнопка Tptool
+local tptoolButton = Instance.new("TextButton")
+tptoolButton.Size = UDim2.new(1, 0, 0, 35)
+tptoolButton.Position = UDim2.new(0, 0, 0, 40)
+tptoolButton.BackgroundColor3 = Color3.fromRGB(200, 100, 200)
+tptoolButton.BorderSizePixel = 0
+tptoolButton.Text = "🚀 Tptool"
+tptoolButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+tptoolButton.TextSize = 14
+tptoolButton.Font = Enum.Font.GothamSemibold
+tptoolButton.Parent = itemsContainer
+
+local tptoolCorner = Instance.new("UICorner")
+tptoolCorner.CornerRadius = UDim.new(0, 6)
+tptoolCorner.Parent = tptoolButton
+
+-- ===== ОТДЕЛЬНАЯ МЕНЮШКА ДЛЯ ТЕЛЕПОРТА (СПРАВА) =====
+local teleportFrame = Instance.new("Frame")
+teleportFrame.Size = UDim2.new(0, 250, 0, 120)
+teleportFrame.Position = UDim2.new(0.5, 170, 0.5, -60)
+teleportFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+teleportFrame.BackgroundTransparency = 0.1
+teleportFrame.BorderSizePixel = 0
+teleportFrame.Active = true
+teleportFrame.Draggable = true
+teleportFrame.Parent = screenGui
+teleportFrame.Visible = false
+
+local teleportCornerMain = Instance.new("UICorner")
+teleportCornerMain.CornerRadius = UDim.new(0, 12)
+teleportCornerMain.Parent = teleportFrame
+
+-- Заголовок меню телепорта
+local teleportTitle = Instance.new("TextLabel")
+teleportTitle.Size = UDim2.new(1, 0, 0, 30)
+teleportTitle.Position = UDim2.new(0, 0, 0, 0)
+teleportTitle.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+teleportTitle.BackgroundTransparency = 1
+teleportTitle.BorderSizePixel = 0
+teleportTitle.Text = "🚀 Телепорт к игроку"
+teleportTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportTitle.TextSize = 14
+teleportTitle.Font = Enum.Font.GothamSemibold
+teleportTitle.Parent = teleportFrame
+
+-- Кнопка закрытия меню телепорта (белый X)
+local teleportClose = Instance.new("TextButton")
+teleportClose.Size = UDim2.new(0, 22, 0, 22)
+teleportClose.Position = UDim2.new(1, -26, 0, 4)
+teleportClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+teleportClose.BackgroundTransparency = 0
+teleportClose.BorderSizePixel = 0
+teleportClose.Text = "X"
+teleportClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportClose.TextSize = 14
+teleportClose.Font = Enum.Font.GothamBold
+teleportClose.Parent = teleportFrame
+
+local teleportCloseCorner = Instance.new("UICorner")
+teleportCloseCorner.CornerRadius = UDim.new(1, 0)
+teleportCloseCorner.Parent = teleportClose
+
+addConnection(teleportClose.MouseEnter:Connect(function()
+    teleportClose.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    teleportClose.Size = UDim2.new(0, 24, 0, 24)
+    teleportClose.Position = UDim2.new(1, -27, 0, 3)
+end))
+
+addConnection(teleportClose.MouseLeave:Connect(function()
+    teleportClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    teleportClose.Size = UDim2.new(0, 22, 0, 22)
+    teleportClose.Position = UDim2.new(1, -26, 0, 4)
+end))
+
+-- Поле для ввода ника
+local teleportInput = Instance.new("TextBox")
+teleportInput.Size = UDim2.new(1, -20, 0, 30)
+teleportInput.Position = UDim2.new(0, 10, 0, 38)
+teleportInput.BackgroundColor3 = Color3.fromRGB(50, 50, 70)
+teleportInput.BorderSizePixel = 1
+teleportInput.BorderColor3 = Color3.fromRGB(80, 80, 100)
+teleportInput.Text = ""
+teleportInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportInput.TextSize = 14
+teleportInput.Font = Enum.Font.Gotham
+teleportInput.PlaceholderText = "Введите ник игрока..."
+teleportInput.Parent = teleportFrame
+
+local teleportInputCorner = Instance.new("UICorner")
+teleportInputCorner.CornerRadius = UDim.new(0, 6)
+teleportInputCorner.Parent = teleportInput
+
+-- Кнопка телепортации
+local teleportGoButton = Instance.new("TextButton")
+teleportGoButton.Size = UDim2.new(1, -20, 0, 30)
+teleportGoButton.Position = UDim2.new(0, 10, 0, 75)
+teleportGoButton.BackgroundColor3 = Color3.fromRGB(60, 200, 80)
+teleportGoButton.BorderSizePixel = 0
+teleportGoButton.Text = "🚀 Телепортироваться"
+teleportGoButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+teleportGoButton.TextSize = 14
+teleportGoButton.Font = Enum.Font.GothamSemibold
+teleportGoButton.Parent = teleportFrame
+
+local teleportGoCorner = Instance.new("UICorner")
+teleportGoCorner.CornerRadius = UDim.new(0, 6)
+teleportGoCorner.Parent = teleportGoButton
+
+-- ===== ОТДЕЛЬНАЯ МЕНЮШКА ДЛЯ ПАЛИТРЫ (СЛЕВА, ОТСТУП 10 ПИКСЕЛЕЙ) =====
+local paletteFrame = Instance.new("Frame")
+paletteFrame.Size = UDim2.new(0, 270, 0, 185)
+paletteFrame.Position = UDim2.new(0.5, -160 - 10 - 270, 0.5, -130)
+paletteFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+paletteFrame.BackgroundTransparency = 0.1
+paletteFrame.BorderSizePixel = 0
+paletteFrame.Active = true
+paletteFrame.Draggable = true
+paletteFrame.Parent = screenGui
+paletteFrame.Visible = false
+paletteFrame.ClipsDescendants = true
+
+local paletteCornerMain = Instance.new("UICorner")
+paletteCornerMain.CornerRadius = UDim.new(0, 12)
+paletteCornerMain.Parent = paletteFrame
+
+-- Заголовок палитры
+local paletteTitle = Instance.new("TextLabel")
+paletteTitle.Size = UDim2.new(1, 0, 0, 30)
+paletteTitle.Position = UDim2.new(0, 0, 0, 0)
+paletteTitle.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+paletteTitle.BackgroundTransparency = 1
+paletteTitle.BorderSizePixel = 0
+paletteTitle.Text = "🎨 Палитра цветов"
+paletteTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+paletteTitle.TextSize = 14
+paletteTitle.Font = Enum.Font.GothamSemibold
+paletteTitle.Parent = paletteFrame
+
+-- Кнопка закрытия палитры (белый X)
+local paletteClose = Instance.new("TextButton")
+paletteClose.Size = UDim2.new(0, 22, 0, 22)
+paletteClose.Position = UDim2.new(1, -26, 0, 4)
+paletteClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+paletteClose.BackgroundTransparency = 0
+paletteClose.BorderSizePixel = 0
+paletteClose.Text = "X"
+paletteClose.TextColor3 = Color3.fromRGB(255, 255, 255)
+paletteClose.TextSize = 14
+paletteClose.Font = Enum.Font.GothamBold
+paletteClose.Parent = paletteFrame
+
+local paletteCloseCorner = Instance.new("UICorner")
+paletteCloseCorner.CornerRadius = UDim.new(1, 0)
+paletteCloseCorner.Parent = paletteClose
+
+addConnection(paletteClose.MouseEnter:Connect(function()
+    paletteClose.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+    paletteClose.Size = UDim2.new(0, 24, 0, 24)
+    paletteClose.Position = UDim2.new(1, -27, 0, 3)
+end))
+
+addConnection(paletteClose.MouseLeave:Connect(function()
+    paletteClose.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    paletteClose.Size = UDim2.new(0, 22, 0, 22)
+    paletteClose.Position = UDim2.new(1, -26, 0, 4)
+end))
+
+-- Контейнер для палитры
+local paletteContent = Instance.new("Frame")
+paletteContent.Size = UDim2.new(1, -20, 1, -45)
+paletteContent.Position = UDim2.new(0, 10, 0, 35)
+paletteContent.BackgroundTransparency = 1
+paletteContent.Parent = paletteFrame
+
+-- Кнопка очистки цвета
+local clearColorButton = Instance.new("TextButton")
+clearColorButton.Size = UDim2.new(1, 0, 0, 30)
+clearColorButton.Position = UDim2.new(0, 0, 1, -25)
+clearColorButton.BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+clearColorButton.BorderSizePixel = 0
+clearColorButton.Text = "🧹 Очистить цвет"
+clearColorButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+clearColorButton.TextSize = 13
+clearColorButton.Font = Enum.Font.GothamSemibold
+clearColorButton.Parent = paletteContent
+
+local clearCorner = Instance.new("UICorner")
+clearCorner.CornerRadius = UDim.new(0, 6)
+clearCorner.Parent = clearColorButton
+
+local ColorpickerHolder = Instance.new("Frame")
+ColorpickerHolder.Size = UDim2.new(1, -30, 1, -45)
+ColorpickerHolder.Position = UDim2.new(0, 0, 0, 0)
+ColorpickerHolder.BackgroundTransparency = 1
+ColorpickerHolder.Parent = paletteContent
+
+-- Палитра
+local ColorpickerMain = Instance.new("Frame")
+ColorpickerMain.Size = UDim2.new(0, 200, 1, 0)
+ColorpickerMain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+ColorpickerMain.Parent = ColorpickerHolder
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 4)
+MainCorner.Parent = ColorpickerMain
+
+local HueGradient = Instance.new("UIGradient")
+HueGradient.Rotation = 0
+HueGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+    ColorSequenceKeypoint.new(0.17, Color3.fromRGB(255, 255, 0)),
+    ColorSequenceKeypoint.new(0.33, Color3.fromRGB(0, 255, 0)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 255, 255)),
+    ColorSequenceKeypoint.new(0.67, Color3.fromRGB(0, 0, 255)),
+    ColorSequenceKeypoint.new(0.83, Color3.fromRGB(255, 0, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+})
+HueGradient.Parent = ColorpickerMain
+
+local BrightnessOverlay = Instance.new("Frame")
+BrightnessOverlay.Size = UDim2.new(1, 0, 1, 0)
+BrightnessOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BrightnessOverlay.BackgroundTransparency = 0
+BrightnessOverlay.BorderSizePixel = 0
+BrightnessOverlay.Parent = ColorpickerMain
+
+local BGGradient = Instance.new("UIGradient")
+BGGradient.Rotation = 90
+BGGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+})
+BGGradient.Parent = BrightnessOverlay
+
+BGGradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.7),
+    NumberSequenceKeypoint.new(1, 0)
+})
+
+local Cursor = Instance.new("Frame")
+Cursor.Size = UDim2.new(0, 10, 0, 10)
+Cursor.Position = UDim2.new(0, 0, 0, 0)
+Cursor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+Cursor.BorderSizePixel = 2
+Cursor.BorderColor3 = Color3.fromRGB(0, 0, 0)
+Cursor.ZIndex = 2
+Cursor.Parent = ColorpickerMain
+
+local CursorCorner = Instance.new("UICorner")
+CursorCorner.CornerRadius = UDim.new(1, 0)
+CursorCorner.Parent = Cursor
+
+-- Вертикальный слайдер яркости (отступ 5 пикселей)
+local BrightnessSlider = Instance.new("Frame")
+BrightnessSlider.Size = UDim2.new(0, 16, 1, 0)
+BrightnessSlider.Position = UDim2.new(1, 5, 0, 0)
+BrightnessSlider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+BrightnessSlider.Parent = ColorpickerHolder
+
+local SliderCorner = Instance.new("UICorner")
+SliderCorner.CornerRadius = UDim.new(0, 4)
+SliderCorner.Parent = BrightnessSlider
+
+local SliderGradient = Instance.new("UIGradient")
+SliderGradient.Rotation = 90
+SliderGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+})
+SliderGradient.Parent = BrightnessSlider
+
+local SliderCursor = Instance.new("Frame")
+SliderCursor.Size = UDim2.new(1.8, 0, 0, 8)
+SliderCursor.Position = UDim2.new(-0.4, 0, 0.5, -4)
+SliderCursor.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+SliderCursor.BorderSizePixel = 2
+SliderCursor.BorderColor3 = Color3.fromRGB(0, 0, 0)
+SliderCursor.Parent = BrightnessSlider
+
+local SliderCursorCorner = Instance.new("UICorner")
+SliderCursorCorner.CornerRadius = UDim.new(0, 4)
+SliderCursorCorner.Parent = SliderCursor
+
+-- Переменные
+local CurrentColor = Color3.fromRGB(255, 255, 255)
+local showNames = true
+local paletteVisible = false
+local teleportVisible = false
+local itemsVisible = false
+local draggingColor = false
+local draggingSlider = false
+local espEnabled = true
+local showSelf = true
+local showOthers = true
+local espObjects = {}
+local isCollapsed = false
+local playersProcessing = {}
+
+-- СОХРАНЯЕМ ПОЗИЦИЮ GUI
+local savedXScale = 0.5
+local savedXOffset = -160
+local savedYScale = 0.5
+local savedYOffset = -130
+
+-- Функция getRoot
+local function getRoot(char)
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        return char:FindFirstChildOfClass("Humanoid").RootPart
+    else
+        return nil
+    end
+end
+
+-- Функция breakVelocity
+local function breakVelocity()
+    local V3 = Vector3.new(0, 0, 0)
+    for _, v in ipairs(LocalPlayer.Character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Velocity, v.RotVelocity = V3, V3
+        end
+    end
+end
+
+-- Функция randomString
+local function randomString()
+    local length = math.random(10,20)
+    local array = {}
+    for i = 1, length do
+        array[i] = string.char(math.random(32, 126))
+    end
+    return table.concat(array)
+end
+
+-- Функция notify
+local function notify(title, text)
+    print("[" .. title .. "] " .. text)
+end
+
+-- Функции для предметов
+local function GiveF3X()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/infyiff/backup/refs/heads/main/f3x.lua"))()
+    notify("Предметы", "F3X загружен!")
+end
+
+local function GiveTptool()
+    local TpTool = Instance.new("Tool")
+    TpTool.Name = "Teleport Tool"
+    TpTool.RequiresHandle = false
+    TpTool.Parent = LocalPlayer:FindFirstChildWhichIsA("Backpack")
+    TpTool.Activated:Connect(function()
+        local root = getRoot(LocalPlayer.Character)
+        local pos = LocalPlayer:GetMouse().Hit
+        if not root or not pos then return end
+        root.CFrame = CFrame.new(pos.X, pos.Y + 3, pos.Z, select(4, root.CFrame:components()))
+        breakVelocity()
+    end)
+    notify("Предметы", "Tptool выдан!")
+end
+
+-- Функция телепортации к игроку
+local function TeleportToPlayer(playerName)
+    local targetPlayer = nil
+    for _, player in ipairs(Players:GetPlayers()) do
+        if string.lower(player.Name) == string.lower(playerName) then
+            targetPlayer = player
+            break
+        end
+    end
+    
+    if not targetPlayer then
+        teleportInput.Text = "❌ Игрок не найден!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    if targetPlayer == LocalPlayer then
+        teleportInput.Text = "❌ Это вы!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    local character = targetPlayer.Character
+    if not character then
+        teleportInput.Text = "❌ Игрок не в игре!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    local rootPart = character:FindFirstChild("HumanoidRootPart")
+    if not rootPart then
+        teleportInput.Text = "❌ Ошибка!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    local localChar = LocalPlayer.Character
+    if not localChar then
+        teleportInput.Text = "❌ У вас нет персонажа!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    local localRoot = getRoot(localChar)
+    if not localRoot then
+        teleportInput.Text = "❌ Ошибка!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+        return
+    end
+    
+    localRoot.CFrame = rootPart.CFrame + Vector3.new(0, 3, 0)
+    breakVelocity()
+    teleportInput.Text = "✅ Телепорт успешен!"
+    task.wait(1)
+    teleportInput.Text = ""
+    teleportInput.PlaceholderText = "Введите ник игрока..."
+end
+
+-- Обработчик для кнопки предметов
+addConnection(itemsButton.MouseButton1Click:Connect(function()
+    itemsVisible = not itemsVisible
+    itemsFrame.Visible = itemsVisible
+    itemsButton.BackgroundColor3 = itemsVisible and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(200, 150, 50)
+    itemsButton.Text = itemsVisible and "📦 Закрыть" or "📦 Предметы"
+    
+    if itemsVisible then
+        local mainPos = mainFrame.Position
+        itemsFrame.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset + 330, mainPos.Y.Scale, mainPos.Y.Offset + 140)
+    end
+end))
+
+-- Обработчик для закрытия меню предметов
+addConnection(itemsClose.MouseButton1Click:Connect(function()
+    itemsVisible = false
+    itemsFrame.Visible = false
+    itemsButton.BackgroundColor3 = Color3.fromRGB(200, 150, 50)
+    itemsButton.Text = "📦 Предметы"
+end))
+
+-- Обработчики для кнопок предметов
+addConnection(f3xButton.MouseButton1Click:Connect(function()
+    GiveF3X()
+end))
+
+addConnection(tptoolButton.MouseButton1Click:Connect(function()
+    GiveTptool()
+end))
+
+-- Обработчик для кнопки телепорта
+addConnection(teleportButton.MouseButton1Click:Connect(function()
+    teleportVisible = not teleportVisible
+    teleportFrame.Visible = teleportVisible
+    teleportButton.BackgroundColor3 = teleportVisible and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(70, 70, 200)
+    teleportButton.Text = teleportVisible and "🚫 Телепорт" or "🚀 Телепорт"
+    
+    if teleportVisible then
+        local mainPos = mainFrame.Position
+        teleportFrame.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset + 330, mainPos.Y.Scale, mainPos.Y.Offset)
+    end
+end))
+
+-- Обработчик для кнопки телепортации
+addConnection(teleportGoButton.MouseButton1Click:Connect(function()
+    local playerName = teleportInput.Text
+    if playerName and playerName ~= "" then
+        TeleportToPlayer(playerName)
+    else
+        teleportInput.Text = "❌ Введите ник!"
+        task.wait(1)
+        teleportInput.Text = ""
+        teleportInput.PlaceholderText = "Введите ник игрока..."
+    end
+end))
+
+-- Обработчик для закрытия меню телепорта
+addConnection(teleportClose.MouseButton1Click:Connect(function()
+    teleportVisible = false
+    teleportFrame.Visible = false
+    teleportButton.BackgroundColor3 = Color3.fromRGB(70, 70, 200)
+    teleportButton.Text = "🚀 Телепорт"
+end))
+
+-- Enter в поле ввода телепорта
+addConnection(teleportInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        local playerName = teleportInput.Text
+        if playerName and playerName ~= "" then
+            TeleportToPlayer(playerName)
+        end
+    end
+end))
+
+-- Обработчик для открытия/закрытия палитры
+addConnection(paletteToggle.MouseButton1Click:Connect(function()
+    paletteVisible = not paletteVisible
+    paletteFrame.Visible = paletteVisible
+    paletteToggle.BackgroundColor3 = paletteVisible and Color3.fromRGB(200, 60, 60) or Color3.fromRGB(100, 100, 140)
+    paletteToggle.Text = paletteVisible and "🚫 Палитра" or "🎨 Палитра"
+    
+    if paletteVisible then
+        local mainPos = mainFrame.Position
+        paletteFrame.Position = UDim2.new(mainPos.X.Scale, mainPos.X.Offset - 10 - 270, mainPos.Y.Scale, mainPos.Y.Offset)
+    end
+end))
+
+-- Обработчик для закрытия палитры
+addConnection(paletteClose.MouseButton1Click:Connect(function()
+    paletteVisible = false
+    paletteFrame.Visible = false
+    paletteToggle.BackgroundColor3 = Color3.fromRGB(100, 100, 140)
+    paletteToggle.Text = "🎨 Палитра"
+end))
+
+-- Обработчик очистки цвета
+addConnection(clearColorButton.MouseButton1Click:Connect(function()
+    CurrentColor = Color3.fromRGB(255, 255, 255)
+    Cursor.Position = UDim2.new(0, -5, 0, -5)
+    SliderCursor.Position = UDim2.new(-0.25, 0, 0, -4)
+    updateESPColor()
+end))
+
+local function ResetColorToWhite()
+    CurrentColor = Color3.fromRGB(255, 255, 255)
+    Cursor.Position = UDim2.new(0, -5, 0, -5)
+    SliderCursor.Position = UDim2.new(-0.25, 0, 0, -4)
+    updateESPColor()
+end
+
+local function GetColorFromPosition(X, Y, SizeX, SizeY)
+    local Hue = X / SizeX
+    local Brightness = 1 - (Y / SizeY)
+    return Color3.fromHSV(Hue, 1, Brightness)
+end
+
+local function UpdateColor(Input)
+    if not ColorpickerMain or not ColorpickerMain.AbsolutePosition then return end
+    
+    local Position = Input.Position
+    local AbsolutePosition = ColorpickerMain.AbsolutePosition
+    local Size = ColorpickerMain.AbsoluteSize
+    
+    if Size.X == 0 or Size.Y == 0 then return end
+    
+    local X = math.clamp(Position.X - AbsolutePosition.X, 0, Size.X)
+    local Y = math.clamp(Position.Y - AbsolutePosition.Y, 0, Size.Y)
+    
+    Cursor.Position = UDim2.new(0, X - 5, 0, Y - 5)
+    CurrentColor = GetColorFromPosition(X, Y, Size.X, Size.Y)
+    updateESPColor()
+end
+
+local function UpdateSlider(Input)
+    if not BrightnessSlider or not BrightnessSlider.AbsolutePosition then return end
+    
+    local Position = Input.Position
+    local AbsolutePosition = BrightnessSlider.AbsolutePosition
+    local Size = BrightnessSlider.AbsoluteSize
+    
+    if Size.Y == 0 then return end
+    
+    local Y = math.clamp(Position.Y - AbsolutePosition.Y, 0, Size.Y)
+    SliderCursor.Position = UDim2.new(-0.25, 0, 0, Y - 4)
+    
+    local Brightness = 1 - (Y / Size.Y)
+    local H, S, V = CurrentColor:ToHSV()
+    CurrentColor = Color3.fromHSV(H, S, Brightness)
+    updateESPColor()
+end
+
+-- Обработчики палитры
+local function onColorInputBegan(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingColor = true
+        UpdateColor(Input)
+        paletteFrame.Active = false
+    end
+end
+
+local function onColorInputChanged(Input)
+    if draggingColor and Input.UserInputType == Enum.UserInputType.MouseMovement then
+        UpdateColor(Input)
+    end
+end
+
+local function onColorInputEnded(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingColor = false
+        paletteFrame.Active = true
+    end
+end
+
+addConnection(ColorpickerMain.InputBegan:Connect(onColorInputBegan))
+addConnection(ColorpickerMain.InputChanged:Connect(onColorInputChanged))
+addConnection(ColorpickerMain.InputEnded:Connect(onColorInputEnded))
+
+local function onSliderInputBegan(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = true
+        UpdateSlider(Input)
+        paletteFrame.Active = false
+    end
+end
+
+local function onSliderInputChanged(Input)
+    if draggingSlider and Input.UserInputType == Enum.UserInputType.MouseMovement then
+        UpdateSlider(Input)
+    end
+end
+
+local function onSliderInputEnded(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingSlider = false
+        paletteFrame.Active = true
+    end
+end
+
+addConnection(BrightnessSlider.InputBegan:Connect(onSliderInputBegan))
+addConnection(BrightnessSlider.InputChanged:Connect(onSliderInputChanged))
+addConnection(BrightnessSlider.InputEnded:Connect(onSliderInputEnded))
+
+-- Функция полного удаления всех ESP визуалов
+local function DestroyAllESP()
+    for player, objects in pairs(espObjects) do
+        if objects.Highlight then objects.Highlight:Destroy() end
+        if objects.Billboard then objects.Billboard:Destroy() end
+    end
+    espObjects = {}
+    playersProcessing = {}
+end
+
+-- ПОЛНАЯ ВЫГРУЗКА СКРИПТА
+local function FullUnload()
+    DestroyAllESP()
+    
+    for _, conn in ipairs(connections) do
+        pcall(function() conn:Disconnect() end)
+    end
+    connections = {}
+    
+    if screenGui then
+        pcall(function() screenGui:Destroy() end)
+    end
+    
+    espEnabled = nil
+    showSelf = nil
+    showOthers = nil
+    showNames = nil
+    CurrentColor = nil
+    espObjects = nil
+    playersProcessing = nil
+    
+    collectgarbage()
+    
+    print("💎 ESP полностью выгружен! Все функции отключены.")
+end
+
+-- Кнопка закрытия - ПОЛНОСТЬЮ ВЫГРУЖАЕТ СКРИПТ
+addConnection(closeButton.MouseButton1Click:Connect(function()
+    FullUnload()
+end))
+
+function updateESPColor()
+    for player, objects in pairs(espObjects) do
+        if objects.Highlight then
+            objects.Highlight.OutlineColor = CurrentColor
+            objects.Highlight.FillColor = CurrentColor
+        end
+        if objects.NameLabel and player ~= LocalPlayer then
+            objects.NameLabel.TextColor3 = CurrentColor
+        end
+        updateVisibility(player)
+    end
+end
+
+function toggleCollapse()
+    isCollapsed = not isCollapsed
+    local targetSize = isCollapsed and UDim2.new(0, 320, 0, 35) or UDim2.new(0, 320, 0, 260)
+    contentContainer.Visible = not isCollapsed
+    arrowButton.Text = isCollapsed and "▶" or "◀"
+    
+    local currentPos = mainFrame.Position
+    savedXScale = currentPos.X.Scale
+    savedXOffset = currentPos.X.Offset
+    savedYScale = currentPos.Y.Scale
+    savedYOffset = currentPos.Y.Offset
+    
+    TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = targetSize,
+        Position = UDim2.new(savedXScale, savedXOffset, savedYScale, savedYOffset)
+    }):Play()
+end
+
+addConnection(arrowButton.MouseButton1Click:Connect(toggleCollapse))
+
+function createESP(player)
+    if playersProcessing[player] then return end
+    playersProcessing[player] = true
+    
+    local character = player.Character
+    if not character then 
+        playersProcessing[player] = nil
+        return 
+    end
+    
+    local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart then 
+        playersProcessing[player] = nil
+        return 
+    end
+    
+    removeESP(player)
+    
+    local highlight = Instance.new("Highlight")
+    highlight.Parent = character
+    highlight.FillColor = CurrentColor
+    highlight.FillTransparency = 1
+    highlight.OutlineColor = CurrentColor
+    highlight.OutlineTransparency = 0
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    
+    local billboard = Instance.new("BillboardGui")
+    billboard.Parent = humanoidRootPart
+    billboard.Size = UDim2.new(0, 200, 0, 40)
+    billboard.Adornee = humanoidRootPart
+    billboard.AlwaysOnTop = true
+    billboard.StudsOffset = Vector3.new(0, 3.5, 0)
+    
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Parent = billboard
+    nameLabel.Size = UDim2.new(1, 0, 1, 0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = player.Name
+    nameLabel.TextColor3 = CurrentColor
+    nameLabel.TextSize = 14
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    nameLabel.TextStrokeTransparency = 0.3
+    
+    if player == LocalPlayer then
+        nameLabel.Text = player.Name .. " (ВЫ)"
+        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 0)
+    end
+    
+    espObjects[player] = {Highlight = highlight, Billboard = billboard, NameLabel = nameLabel}
+    updateVisibility(player)
+    playersProcessing[player] = nil
+end
+
+function updateVisibility(player)
+    local objects = espObjects[player]
+    if not objects then return end
+    local isSelf = (player == LocalPlayer)
+    local visible = espEnabled and ((isSelf and showSelf) or (not isSelf and showOthers))
+    
+    if objects.Highlight then
+        objects.Highlight.Enabled = visible
+    end
+    
+    if objects.Billboard then 
+        objects.Billboard.Enabled = visible and showNames
+    end
+end
+
+function removeESP(player)
+    if espObjects[player] then
+        if espObjects[player].Highlight then espObjects[player].Highlight:Destroy() end
+        if espObjects[player].Billboard then espObjects[player].Billboard:Destroy() end
+        espObjects[player] = nil
+    end
+    playersProcessing[player] = nil
+end
+
+function updateAllVisibility()
+    for player, _ in pairs(espObjects) do
+        updateVisibility(player)
+    end
+end
+
+function updateAllNames()
+    for player, objects in pairs(espObjects) do
+        if objects.Billboard then
+            local isSelf = (player == LocalPlayer)
+            local visible = espEnabled and ((isSelf and showSelf) or (not isSelf and showOthers))
+            objects.Billboard.Enabled = visible and showNames
+        end
+    end
+end
+
+local function setupCharacterHandler(player)
+    addConnection(player.CharacterAdded:Connect(function(character)
+        task.wait(0.5)
+        if espEnabled then
+            createESP(player)
+        end
+    end))
+end
+
+addConnection(toggleButton.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    toggleButton.Text = espEnabled and "✅ ESP ВКЛ" or "❌ ESP ВЫКЛ"
+    toggleButton.BackgroundColor3 = espEnabled and Color3.fromRGB(60, 200, 80) or Color3.fromRGB(200, 60, 60)
+    
+    for player, objects in pairs(espObjects) do
+        local isSelf = (player == LocalPlayer)
+        local visible = espEnabled and ((isSelf and showSelf) or (not isSelf and showOthers))
+        
+        if objects.Highlight then
+            objects.Highlight.Enabled = visible
+        end
+        
+        if objects.Billboard then
+            objects.Billboard.Enabled = visible and showNames
+        end
+    end
+end))
+
+addConnection(selfToggle.MouseButton1Click:Connect(function()
+    showSelf = not showSelf
+    selfToggle.BackgroundColor3 = showSelf and Color3.fromRGB(60, 200, 80) or Color3.fromRGB(200, 60, 60)
+    selfToggle.Text = showSelf and "👤 Себя" or "👤 Скрыть"
+    updateAllVisibility()
+    if showSelf and espEnabled then 
+        if not espObjects[LocalPlayer] then
+            createESP(LocalPlayer)
+        end
+    end
+end))
+
+addConnection(othersToggle.MouseButton1Click:Connect(function()
+    showOthers = not showOthers
+    othersToggle.BackgroundColor3 = showOthers and Color3.fromRGB(60, 200, 80) or Color3.fromRGB(200, 60, 60)
+    othersToggle.Text = showOthers and "👥 Других" or "👥 Скрыть"
+    updateAllVisibility()
+end))
+
+addConnection(namesToggle.MouseButton1Click:Connect(function()
+    showNames = not showNames
+    namesToggle.BackgroundColor3 = showNames and Color3.fromRGB(60, 200, 80) or Color3.fromRGB(200, 60, 60)
+    namesToggle.Text = showNames and "📝 Никнеймы" or "📝 Скрыть ники"
+    updateAllNames()
+end))
+
+addConnection(Players.PlayerAdded:Connect(function(player)
+    task.wait(0.5)
+    if espEnabled then
+        createESP(player)
+    end
+    setupCharacterHandler(player)
+end))
+
+addConnection(Players.PlayerRemoving:Connect(function(player)
+    removeESP(player)
+end))
+
+task.wait(0.5)
+for _, player in ipairs(Players:GetPlayers()) do
+    createESP(player)
+    setupCharacterHandler(player)
+end
+
+print("💎 ESP | By ZT")
